@@ -1,9 +1,12 @@
 "use client";
 
+import { cookies } from "next/headers";
+import handleThemeChange from "@/actions/handleThemeChange";
 import { useEffect } from "react";
 
 export default function ClientThemeHandler() {
   useEffect(() => {
+    let theme = "dark";
     if (
       localStorage.theme === "dark" ||
       (!("theme" in localStorage) &&
@@ -12,13 +15,14 @@ export default function ClientThemeHandler() {
       console.debug("dark mode");
       document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
-      localStorage.theme = "dark";
+      theme = localStorage.theme = "dark";
     } else {
       console.debug("light mode");
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
-      localStorage.theme = "light";
+      theme = localStorage.theme = "light";
     }
+    handleThemeChange(theme);
   }, []);
   return <></>;
 }

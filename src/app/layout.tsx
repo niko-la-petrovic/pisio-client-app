@@ -6,6 +6,7 @@ import MenuBar from "./menubar";
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import Sidebar from "./sidebar";
+import { cookies } from "next/headers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,8 +20,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = cookies();
+  const themeClass =
+    (cookieStore.get("theme")?.value ?? "dark") === "dark" ? "dark" : "light";
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={themeClass}>
       <ClientThemeHandler />
       <body className={inter.className}>
         <div className="h-[calc(100vh-64px)]">
