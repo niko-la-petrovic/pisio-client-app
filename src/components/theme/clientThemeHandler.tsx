@@ -1,10 +1,11 @@
 "use client";
 
-import { cookies } from "next/headers";
+import { useEffect, useState } from "react";
+
 import handleThemeChange from "@/actions/handleThemeChange";
-import { useEffect } from "react";
 
 export default function ClientThemeHandler() {
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   useEffect(() => {
     let theme = "dark";
     if (
@@ -16,11 +17,13 @@ export default function ClientThemeHandler() {
       document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
       theme = localStorage.theme = "dark";
+      setTheme("dark");
     } else {
       console.debug("light mode");
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
       theme = localStorage.theme = "light";
+      setTheme("light");
     }
     handleThemeChange(theme);
   }, []);

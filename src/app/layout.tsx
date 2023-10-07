@@ -1,6 +1,9 @@
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 
-import ClientThemeHandler from "@/components/theme/clientThemeHandler";
+import { ToastContainer, toast } from "react-toastify";
+
+import ClientThemeHandler from "@/components/theme/ClientThemeHandler";
 import { Inter } from "next/font/google";
 import MenuBar from "./menubar";
 import type { Metadata } from "next";
@@ -25,9 +28,9 @@ export default function RootLayout({
     (cookieStore.get("theme")?.value ?? "dark") === "dark" ? "dark" : "light";
   return (
     <html lang="en" className={themeClass}>
-      <ClientThemeHandler />
       <body className={inter.className}>
         <div className="h-[calc(100vh-64px)]">
+          <ClientThemeHandler />
           <Providers className="h-full">
             <MenuBar />
             <div className="h-full w-full sm:flex">
@@ -35,6 +38,7 @@ export default function RootLayout({
               <div className="h-full flex-1">{children}</div>
             </div>
           </Providers>
+          <ToastContainer />
         </div>
       </body>
     </html>
