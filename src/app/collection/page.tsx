@@ -1,12 +1,12 @@
 "use client";
 
-import { ChangeEvent, useCallback, useState } from "react";
-import { Dropdown, DropdownItem, DropdownTrigger } from "@nextui-org/dropdown";
+import { ChangeEvent, useCallback, useMemo, useState } from "react";
 import {
   GetCollectionResponse,
   GetCollectionResponsePaginated,
 } from "@/types/api/responses";
 import {
+  Selection,
   Table,
   TableBody,
   TableCell,
@@ -17,49 +17,40 @@ import {
 
 import { APIErrorResponse } from "@/types/api/errorResponse";
 import { Button } from "@nextui-org/button";
+import { CollectionColumnKey } from "@/types/tables";
+import CollectionTableRow from "@/components/collection/CollectionTableRow";
 import CreateCollectionModal from "@/components/modals/CreateCollectionModal";
-import DeleteCollectionModal from "@/components/modals/DeleteCollectionModal";
-import { DropdownMenu } from "@nextui-org/dropdown";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
+import { Pagination } from "@nextui-org/pagination";
 import { PlusIcon } from "@/components/icons/PlusIcon";
-import { RxUpdate } from "react-icons/rx";
 import { SearchIcon } from "@/components/icons/SearchIcon";
 import { Spinner } from "@nextui-org/spinner";
-import TimeAgo from "react-timeago";
-import { VerticalDotsIcon } from "@/components/icons/VerticalDotsIcon";
 import { relativeApiQueryFetcher } from "@/services/apiFetcher";
 import { useDisclosure } from "@nextui-org/modal";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
-enum ColumnKey {
-  Name = "name",
-  Status = "status",
-  Actions = "actions",
-  Embedding = "embeddingSize",
-}
-
 type Column = {
-  key: ColumnKey;
+  key: CollectionColumnKey;
   label: string;
 };
 
 const columns: Column[] = [
   {
-    key: ColumnKey.Name,
+    key: CollectionColumnKey.Name,
     label: "Name",
   },
   {
-    key: ColumnKey.Embedding,
+    key: CollectionColumnKey.Embedding,
     label: "Embedding",
   },
   {
-    key: ColumnKey.Status,
+    key: CollectionColumnKey.Status,
     label: "Status",
   },
   {
-    key: ColumnKey.Actions,
+    key: CollectionColumnKey.Actions,
     label: "Actions",
   },
 ];
@@ -69,6 +60,7 @@ export default function CollectionsPage() {
   const [page, setPage] = useState<number>(1);
   const [filterValue, setFilterValue] = useState<string>("");
   const hasSearchFilter = Boolean(filterValue);
+  const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
   const { data, error, isLoading, mutate } = useSWR<
     GetCollectionResponsePaginated,
     APIErrorResponse
@@ -93,6 +85,8 @@ export default function CollectionsPage() {
     [],
   );
 
+  // TODO mutate on create
+
   const {
     onOpen: openDelete,
     onClose: closeDelete,
@@ -109,94 +103,44 @@ export default function CollectionsPage() {
   const router = useRouter();
 
   const renderCell = useCallback(
-    (item: GetCollectionResponse, columnKey: string) => {
-      switch (columnKey) {
-        case ColumnKey.Name:
-          return (
-            <div className="flex flex-col">
-              <span className="text-lg font-semibold leading-none">
-                {item.name}
-              </span>
-              {item.description && (
-                <span className="overflow-ellipsis text-xs text-neutral-500">
-                  {item.description}
-                </span>
-              )}
-            </div>
-          );
-        case ColumnKey.Embedding:
-          return (
-            <div className="flex flex-col justify-start">
-              {item.embeddingSize ? (
-                <span className="flex gap-2">
-                  <span>
-                    n=<span className="font-semibold">{item.vectorCount}</span>
-                  </span>
-                  <span>
-                    {" * "}
-                    <span className="font-semibold text-secondary">
-                      {item.embeddingSize}
-                    </span>
-                  </span>
-                </span>
-              ) : (
-                <span className="text-xs text-neutral-200">
-                  i&apos;m lonely :&#40;
-                </span>
-              )}
-            </div>
-          );
-        case ColumnKey.Status:
-          return (
-            <div className="flex flex-col">
-              <div>{item.createdAt && <TimeAgo date={item.createdAt} />}</div>
-              <div className="flex items-center gap-1 text-blue-300">
-                {item.lastUpdated && (
-                  <>
-                    <TimeAgo date={item.lastUpdated} />
-                    <RxUpdate />
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        case ColumnKey.Actions:
-          return (
-            <div className="relative flex items-center justify-end gap-2">
-              <Dropdown
-                closeOnSelect
-                className="border-1 border-default-200 bg-background"
-              >
-                <DropdownTrigger>
-                  <Button isIconOnly radius="full" size="sm" variant="light">
-                    <VerticalDotsIcon className="text-default-400" />
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu
-                  aria-label="actions"
-                  onAction={(key) => {
-                    setTimeout(() => {
-                      router.push(key as string);
-                    }, 500);
-                  }}
-                >
-                  <DropdownItem
-                    key={`/collection/${item.id}`}
-                    value={`/collection/${item.id}`}
-                    textValue="Inspect"
-                  >
-                    Inspect
-                  </DropdownItem>
-                  {/* TODO delete modal */}
-                  <DropdownItem color="danger">Delete</DropdownItem>
-                </DropdownMenu>
-              </Dropdown>
-            </div>
-          );
-      }
-    },
+    (item: GetCollectionResponse, key: string) =>
+      CollectionTableRow(router, item, key),
     [router],
   );
+
+  const bottomContent = useMemo(() => {
+    return (
+      <>
+        {data?.totalPages && (
+          <div className="flex items-center justify-between px-2 py-2">
+            <Pagination
+              showControls
+              classNames={{
+                cursor: "bg-foreground text-background",
+              }}
+              color="default"
+              isDisabled={hasSearchFilter}
+              page={page}
+              total={data.totalPages}
+              variant="light"
+              onChange={setPage}
+            />
+            <span className="text-small text-default-400">
+              {selectedKeys === "all"
+                ? "All items selected"
+                : `${selectedKeys.size} of ${data?.items?.length} selected`}
+            </span>
+          </div>
+        )}
+      </>
+    );
+  }, [
+    hasSearchFilter,
+    page,
+    data?.totalPages,
+    data?.items?.length,
+    selectedKeys,
+  ]);
 
   const deleteCollection = useCallback(
     async (id: string) => {
@@ -259,7 +203,14 @@ export default function CollectionsPage() {
             </select>
           </label>
         </div>
-        <Table aria-label="Collections">
+        <Table
+          aria-label="Collections"
+          selectedKeys={selectedKeys}
+          selectionMode="single"
+          bottomContent={bottomContent}
+          bottomContentPlacement="outside"
+          onSelectionChange={setSelectedKeys}
+        >
           <TableHeader>
             {columns.map((column) => (
               <TableColumn key={column.key}>{column.label}</TableColumn>

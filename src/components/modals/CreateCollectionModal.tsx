@@ -10,12 +10,12 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@nextui-org/modal";
-import { toast, useToast } from "react-toastify";
 import { useCallback, useMemo, useState } from "react";
 
 import { APIErrorResponse } from "@/types/api/errorResponse";
 import { Button } from "@nextui-org/button";
 import { apiJsonSender } from "@/services/apiFetcher";
+import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
 
 export default function CreateCollectionModal({
