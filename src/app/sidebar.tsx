@@ -8,9 +8,16 @@ export default function Sidebar() {
         .flatMap((group) => group.items)
         .map((item, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-xl">{item.icon}</span>
-            <Link color="foreground" href={item.href}>
-              {item.label}
+            <Link
+              color="foreground"
+              href={item.href}
+              isBlock
+              className="w-full"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{item.icon}</span>
+                <span>{item.label}</span>
+              </div>
             </Link>
           </div>
         ))}

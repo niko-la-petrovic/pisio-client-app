@@ -1,5 +1,6 @@
 "use client";
 
+import { ChangeEvent, useCallback, useState } from "react";
 import { Dropdown, DropdownItem, DropdownTrigger } from "@nextui-org/dropdown";
 import {
   GetCollectionResponse,
@@ -13,13 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/table";
-import {
-  relativeApiFetcher,
-  relativeApiQueryFetcher,
-} from "@/services/apiFetcher";
-import { useCallback, useState } from "react";
 
+import { APIErrorResponse } from "@/types/api/errorResponse";
 import { Button } from "@nextui-org/button";
+import CreateCollectionModal from "@/components/modals/CreateCollectionModal";
+import DeleteCollectionModal from "@/components/modals/DeleteCollectionModal";
 import { DropdownMenu } from "@nextui-org/dropdown";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
@@ -29,6 +28,8 @@ import { SearchIcon } from "@/components/icons/SearchIcon";
 import { Spinner } from "@nextui-org/spinner";
 import TimeAgo from "react-timeago";
 import { VerticalDotsIcon } from "@/components/icons/VerticalDotsIcon";
+import { relativeApiQueryFetcher } from "@/services/apiFetcher";
+import { useDisclosure } from "@nextui-org/modal";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -66,28 +67,45 @@ const columns: Column[] = [
 export default function CollectionsPage() {
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [page, setPage] = useState<number>(1);
-
-  // TODO use query params in route
   const [filterValue, setFilterValue] = useState<string>("");
   const hasSearchFilter = Boolean(filterValue);
-
-  const { data, error, isLoading, isValidating } =
-    useSWR<GetCollectionResponsePaginated>(
-      [
-        "api/Collection",
-        (hasSearchFilter ? `nameQuery=${filterValue}&` : "") +
-          `page=${page}&pageSize=${rowsPerPage}`,
-      ],
-      ([route, query]) => relativeApiQueryFetcher(route, query as string),
-    );
+  const { data, error, isLoading, mutate } = useSWR<
+    GetCollectionResponsePaginated,
+    APIErrorResponse
+  >(
+    [
+      "api/Collection",
+      (hasSearchFilter ? `nameQuery=${filterValue}&` : "") +
+        `page=${page}&pageSize=${rowsPerPage}`,
+    ],
+    ([route, query]) => relativeApiQueryFetcher(route, query as string),
+  );
 
   const onSearchChange = useCallback((value?: string) => {
     if (value) setFilterValue(value);
     else setFilterValue("");
   }, []);
 
-  // TODO apply search filter
+  const onRowsPerPageChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      setRowsPerPage(Number(event.target.value));
+    },
+    [],
+  );
 
+  const {
+    onOpen: openDelete,
+    onClose: closeDelete,
+    isOpen: isDeleteOpen,
+    onOpenChange: onDeleteOpenChange,
+  } = useDisclosure();
+
+  const {
+    onOpen: openCreate,
+    onClose: closeCreate,
+    isOpen: isCreateOpen,
+    onOpenChange: onCreateOpenChange,
+  } = useDisclosure();
   const router = useRouter();
 
   const renderCell = useCallback(
@@ -110,10 +128,16 @@ export default function CollectionsPage() {
           return (
             <div className="flex flex-col justify-start">
               {item.embeddingSize ? (
-                <span>
-                  n=<span className="font-semibold">{item.vectorCount}</span>
-                  {" * "}
-                  <span className="font-semibold">{item.embeddingSize}</span>
+                <span className="flex gap-2">
+                  <span>
+                    n=<span className="font-semibold">{item.vectorCount}</span>
+                  </span>
+                  <span>
+                    {" * "}
+                    <span className="font-semibold text-secondary">
+                      {item.embeddingSize}
+                    </span>
+                  </span>
                 </span>
               ) : (
                 <span className="text-xs text-neutral-200">
@@ -126,11 +150,11 @@ export default function CollectionsPage() {
           return (
             <div className="flex flex-col">
               <div>{item.createdAt && <TimeAgo date={item.createdAt} />}</div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-blue-300">
                 {item.lastUpdated && (
                   <>
                     <TimeAgo date={item.lastUpdated} />
-                    <RxUpdate className="text-zinc-400" />
+                    <RxUpdate />
                   </>
                 )}
               </div>
@@ -174,6 +198,16 @@ export default function CollectionsPage() {
     [router],
   );
 
+  const deleteCollection = useCallback(
+    async (id: string) => {
+      await fetch(`/api/Collection/${id}`, {
+        method: "DELETE",
+      });
+      mutate();
+    },
+    [mutate],
+  );
+
   return (
     <PageContainer title="Collections">
       <div className="flex flex-col gap-4">
@@ -196,9 +230,34 @@ export default function CollectionsPage() {
             className="bg-foreground text-background"
             endContent={<PlusIcon />}
             size="sm"
+            onClick={openCreate}
           >
             Add
           </Button>
+          <CreateCollectionModal
+            isOpen={isCreateOpen}
+            onOpenChange={onCreateOpenChange}
+            close={closeCreate}
+          />
+        </div>
+        <div className="flex justify-between gap-4">
+          <span className="text-sm text-default-400">
+            {data?.totalCount && (
+              <span>Total of {data?.totalCount} collections</span>
+            )}
+          </span>
+          <label className="flex items-center gap-1 text-small text-default-400">
+            <span>Rows per page:</span>
+            <select
+              className="bg-transparent text-small text-default-400 outline-none"
+              onChange={onRowsPerPageChange}
+              value={rowsPerPage}
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+            </select>
+          </label>
         </div>
         <Table aria-label="Collections">
           <TableHeader>
@@ -221,6 +280,15 @@ export default function CollectionsPage() {
             )}
           </TableBody>
         </Table>
+        {error && (
+          <div className="flex flex-col gap-0 text-danger">
+            <span className="font-bold">Error</span>
+            <span className="font-semibold">
+              Status <span className="">{error.status}</span> - {error.title}
+            </span>
+            <span className="">Please wait or or try again.</span>
+          </div>
+        )}
       </div>
     </PageContainer>
   );
