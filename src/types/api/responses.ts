@@ -46,6 +46,7 @@ export interface GetCollectionResponse {
     createdAt?: Date;
     lastUpdated?: Date | undefined;
     embeddingSize?: number | undefined;
+    vectorCount?: number | undefined;
 }
 
 export interface GetCollectionResponsePaginated {

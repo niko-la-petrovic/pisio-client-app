@@ -3,7 +3,7 @@ import { menuBarItemGroups } from "@/constants/menuBarItemGroups";
 
 export default function Sidebar() {
   return (
-    <div className="flex h-full flex-col gap-4 overflow-hidden rounded bg-neutral-200 p-4 shadow">
+    <div className="flex h-full flex-col gap-4 overflow-hidden rounded bg-neutral-100 p-4 shadow dark:bg-zinc-900">
       {menuBarItemGroups
         .flatMap((group) => group.items)
         .map((item, i) => (

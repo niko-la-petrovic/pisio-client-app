@@ -9,8 +9,11 @@ export default function PageContainer({
 }) {
   return (
     <>
-      <PageTitle title={title} />
-      {children}
+      <div>
+        {/* TODO add back button - check if history exists */}
+        <PageTitle title={title} />
+        <div className="p-4">{children}</div>
+      </div>
     </>
   );
 }
