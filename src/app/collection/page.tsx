@@ -25,7 +25,9 @@ import PageContainer from "@/components/page/pageContainer";
 import { Pagination } from "@nextui-org/pagination";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { SearchIcon } from "@/components/icons/SearchIcon";
+import SimpleRowsPerPage from "@/components/paging/SimpleRowsPerPage";
 import { Spinner } from "@nextui-org/spinner";
+import { debounce } from "lodash";
 import { relativeApiQueryFetcher } from "@/services/apiFetcher";
 import { useDisclosure } from "@nextui-org/modal";
 import { useRouter } from "next/navigation";
@@ -54,6 +56,8 @@ const columns: Column[] = [
     label: "Actions",
   },
 ];
+
+// TODO add debounce to search
 
 export default function CollectionsPage() {
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
@@ -84,8 +88,6 @@ export default function CollectionsPage() {
     },
     [],
   );
-
-  // TODO mutate on create
 
   const {
     onOpen: openDelete,
@@ -152,6 +154,11 @@ export default function CollectionsPage() {
     [mutate],
   );
 
+  const onCreate = useCallback(() => {
+    setPage(1);
+    mutate();
+  }, [mutate]);
+
   return (
     <PageContainer title="Collections">
       <div className="flex flex-col gap-4">
@@ -179,6 +186,7 @@ export default function CollectionsPage() {
             Add
           </Button>
           <CreateCollectionModal
+            onCreate={onCreate}
             isOpen={isCreateOpen}
             onOpenChange={onCreateOpenChange}
             close={closeCreate}
@@ -190,18 +198,11 @@ export default function CollectionsPage() {
               <span>Total of {data?.totalCount} collections</span>
             )}
           </span>
-          <label className="flex items-center gap-1 text-small text-default-400">
-            <span>Rows per page:</span>
-            <select
-              className="bg-transparent text-small text-default-400 outline-none"
-              onChange={onRowsPerPageChange}
-              value={rowsPerPage}
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-            </select>
-          </label>
+          <SimpleRowsPerPage
+            onChange={setRowsPerPage}
+            value={rowsPerPage}
+            options={[5, 10, 25, 50]}
+          />
         </div>
         <Table
           aria-label="Collections"

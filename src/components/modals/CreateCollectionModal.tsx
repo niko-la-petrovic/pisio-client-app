@@ -22,10 +22,12 @@ export default function CreateCollectionModal({
   isOpen,
   onOpenChange,
   close,
+  onCreate,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   close: () => void;
+  onCreate: () => void;
 }) {
   const theme = useClientTheme();
 
@@ -51,6 +53,7 @@ export default function CreateCollectionModal({
         toast.success("Collection created", {
           theme,
         });
+        onCreate();
         close();
       })
       .catch((err: APIErrorResponse) => {
@@ -65,12 +68,26 @@ export default function CreateCollectionModal({
           },
         );
       });
-  }, [close, description, embeddingSize, name, theme]);
+  }, [close, description, embeddingSize, name, onCreate, theme]);
 
   const onNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
     setNameTouched(true);
   }, []);
+
+  const onDescriptionChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDescription(e.target.value);
+    },
+    [],
+  );
+
+  const onEmbeddingSizeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEmbeddingSize(Number(e.target.value));
+    },
+    [],
+  );
 
   const formInvalid = useMemo(() => {
     return name === null || name.length === 0;
@@ -105,12 +122,16 @@ export default function CreateCollectionModal({
                   label="Description"
                   placeholder="Enter a description"
                   variant="bordered"
+                  value={description ? description : ""}
+                  onChange={onDescriptionChange}
                 />
                 <Input
                   label="Embedding Size"
                   placeholder="Enter an embedding size"
                   type="number"
                   variant="bordered"
+                  value={embeddingSize ? embeddingSize.toString() : ""}
+                  onChangeCapture={onEmbeddingSizeChange}
                 />
               </ModalBody>
               <ModalFooter>
