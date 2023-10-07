@@ -30,7 +30,7 @@ export default function RootLayout({
         <div className="h-[calc(100vh-64px)]">
           <Providers className="h-full">
             <MenuBar />
-            <div className="hidden h-full w-full sm:flex">
+            <div className="h-full w-full sm:flex">
               <Sidebar />
               <div className="h-full flex-1">{children}</div>
             </div>

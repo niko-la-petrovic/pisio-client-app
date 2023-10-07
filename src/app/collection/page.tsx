@@ -13,15 +13,20 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/table";
+import { useCallback, useState } from "react";
 
 import { Button } from "@nextui-org/button";
 import { DropdownMenu } from "@nextui-org/dropdown";
+import { Input } from "@nextui-org/input";
 import { Link } from "@nextui-org/link";
 import PageContainer from "@/components/page/pageContainer";
+import { PlusIcon } from "@/components/icons/PlusIcon";
+import { RxUpdate } from "react-icons/rx";
+import { SearchIcon } from "@/components/icons/SearchIcon";
 import { Spinner } from "@nextui-org/spinner";
+import TimeAgo from "react-timeago";
 import { VerticalDotsIcon } from "@/components/icons/VerticalDotsIcon";
 import { relativeApiFetcher } from "@/services/apiFetcher";
-import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -57,11 +62,20 @@ const columns: Column[] = [
 ];
 
 export default function CollectionsPage() {
+  const [filterValue, setFilterValue] = useState<string>("");
+  const hasSearchFilter = Boolean(filterValue);
   const { data, error, isLoading, isValidating } =
     useSWR<GetCollectionResponsePaginated>(
       "api/Collection",
       relativeApiFetcher,
     );
+
+  const onSearchChange = useCallback((value?: string) => {
+    if (value) setFilterValue(value);
+    else setFilterValue("");
+  }, []);
+
+  // TODO apply search filter
 
   const router = useRouter();
 
@@ -100,8 +114,15 @@ export default function CollectionsPage() {
         case ColumnKey.Status:
           return (
             <div className="flex flex-col">
-              <span>{item.createdAt?.toString()}</span>
-              {item.lastUpdated && <span>{item.lastUpdated?.toString()}</span>}
+              <div>{item.createdAt && <TimeAgo date={item.createdAt} />}</div>
+              <div className="flex items-center gap-1">
+                {item.lastUpdated && (
+                  <>
+                    <TimeAgo date={item.lastUpdated} />
+                    <RxUpdate className="text-zinc-400" />
+                  </>
+                )}
+              </div>
             </div>
           );
         case ColumnKey.Actions:
@@ -118,11 +139,11 @@ export default function CollectionsPage() {
                 </DropdownTrigger>
                 <DropdownMenu
                   aria-label="actions"
-                  onAction={(key) =>
+                  onAction={(key) => {
                     setTimeout(() => {
                       router.push(key as string);
-                    }, 500)
-                  }
+                    }, 500);
+                  }}
                 >
                   <DropdownItem
                     key={`/collection/${item.id}`}
@@ -131,40 +152,65 @@ export default function CollectionsPage() {
                   >
                     Inspect
                   </DropdownItem>
-                  <DropdownItem>Delete</DropdownItem>
+                  {/* TODO delete modal */}
+                  <DropdownItem color="danger">Delete</DropdownItem>
                 </DropdownMenu>
               </Dropdown>
             </div>
           );
       }
     },
-    [],
+    [router],
   );
 
   return (
     <PageContainer title="Collections">
-      <Table aria-label="Collections">
-        <TableHeader>
-          {columns.map((column) => (
-            <TableColumn key={column.key}>{column.label}</TableColumn>
-          ))}
-        </TableHeader>
-        <TableBody
-          isLoading={isLoading}
-          loadingContent={<Spinner />}
-          emptyContent={isLoading ? <div></div> : "No collections found"}
-          items={data?.items ?? []}
-        >
-          {(item) => (
-            <TableRow key={item.id}>
-              {/* TODO fix type error */}
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey as string)}</TableCell>
-              )}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-4 justify-between">
+          <Input
+            isClearable
+            classNames={{
+              base: "w-full sm:max-w-[44%]",
+              inputWrapper: "border-1",
+            }}
+            placeholder="Search by name"
+            size="sm"
+            startContent={<SearchIcon className="text-default-300" />}
+            value={filterValue}
+            variant="bordered"
+            onClear={() => setFilterValue("")}
+            onValueChange={onSearchChange}
+          />
+          <Button
+            className="bg-foreground text-background"
+            endContent={<PlusIcon />}
+            size="sm"
+          >
+            Add
+          </Button>
+        </div>
+        <Table aria-label="Collections">
+          <TableHeader>
+            {columns.map((column) => (
+              <TableColumn key={column.key}>{column.label}</TableColumn>
+            ))}
+          </TableHeader>
+          <TableBody
+            isLoading={isLoading}
+            loadingContent={<Spinner />}
+            emptyContent={isLoading ? <div></div> : "No collections found"}
+            items={data?.items ?? []}
+          >
+            {(item) => (
+              <TableRow key={item.id}>
+                {(columnKey) => (
+                  <TableCell>{renderCell(item, columnKey as string)}</TableCell>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </PageContainer>
   );
 }
