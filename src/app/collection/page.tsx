@@ -13,12 +13,15 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/table";
+import {
+  relativeApiFetcher,
+  relativeApiQueryFetcher,
+} from "@/services/apiFetcher";
 import { useCallback, useState } from "react";
 
 import { Button } from "@nextui-org/button";
 import { DropdownMenu } from "@nextui-org/dropdown";
 import { Input } from "@nextui-org/input";
-import { Link } from "@nextui-org/link";
 import PageContainer from "@/components/page/pageContainer";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { RxUpdate } from "react-icons/rx";
@@ -26,7 +29,6 @@ import { SearchIcon } from "@/components/icons/SearchIcon";
 import { Spinner } from "@nextui-org/spinner";
 import TimeAgo from "react-timeago";
 import { VerticalDotsIcon } from "@/components/icons/VerticalDotsIcon";
-import { relativeApiFetcher } from "@/services/apiFetcher";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -62,12 +64,21 @@ const columns: Column[] = [
 ];
 
 export default function CollectionsPage() {
+  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
+  const [page, setPage] = useState<number>(1);
+
+  // TODO use query params in route
   const [filterValue, setFilterValue] = useState<string>("");
   const hasSearchFilter = Boolean(filterValue);
+
   const { data, error, isLoading, isValidating } =
     useSWR<GetCollectionResponsePaginated>(
-      "api/Collection",
-      relativeApiFetcher,
+      [
+        "api/Collection",
+        (hasSearchFilter ? `nameQuery=${filterValue}&` : "") +
+          `page=${page}&pageSize=${rowsPerPage}`,
+      ],
+      ([route, query]) => relativeApiQueryFetcher(route, query as string),
     );
 
   const onSearchChange = useCallback((value?: string) => {
@@ -166,7 +177,7 @@ export default function CollectionsPage() {
   return (
     <PageContainer title="Collections">
       <div className="flex flex-col gap-4">
-        <div className="flex gap-4 justify-between">
+        <div className="flex justify-between gap-4">
           <Input
             isClearable
             classNames={{
