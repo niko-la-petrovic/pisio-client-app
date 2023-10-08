@@ -4,28 +4,31 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/dropdown";
+import {
+  GetCollectionResponse,
+  GetVectorResponse,
+} from "@/types/api/responses";
 
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { Button } from "@nextui-org/button";
-import { CollectionColumnKey } from "@/types/tables";
-import { GetCollectionResponse } from "@/types/api/responses";
 import { RxUpdate } from "react-icons/rx";
 import TimeAgo from "react-timeago";
 import TimeStatus from "../table/TimeStatus";
+import { VectorColumnKey } from "@/types/tables";
 import { VerticalDotsIcon } from "../icons/VerticalDotsIcon";
 
-export default function CollectionTableRow(
+export default function VectorTableRow(
   router: AppRouterInstance,
-  item: GetCollectionResponse,
+  item: GetVectorResponse,
   columnKey: string,
   onDelete: () => void,
 ) {
   switch (columnKey) {
-    case CollectionColumnKey.Name:
+    case VectorColumnKey.Class:
       return (
         <div className="flex flex-col">
           <span className="text-lg font-semibold leading-none">
-            {item.name}
+            {item.class}
           </span>
           {item.description && (
             <span className="overflow-ellipsis text-xs text-neutral-500">
@@ -34,20 +37,14 @@ export default function CollectionTableRow(
           )}
         </div>
       );
-    case CollectionColumnKey.Embedding:
+    case VectorColumnKey.Embedding:
       return (
         <div className="flex flex-col justify-start">
-          {item.embeddingSize ? (
+          {item.embedding?.length ? (
             <span className="flex gap-2">
-              <span>
-                n=<span className="font-semibold">{item.vectorCount}</span>
-              </span>
-              <span>
-                {" * "}
-                <span className="font-semibold text-secondary">
-                  {item.embeddingSize}
-                </span>
-              </span>
+              {item.embedding.map((e, index) => {
+                return <span key={index}>{e}</span>;
+              })}
             </span>
           ) : (
             <span className="text-xs text-neutral-200">
@@ -56,11 +53,11 @@ export default function CollectionTableRow(
           )}
         </div>
       );
-    case CollectionColumnKey.Status:
+    case VectorColumnKey.Status:
       return (
         <TimeStatus createdAt={item.createdAt} lastUpdated={item.lastUpdated} />
       );
-    case CollectionColumnKey.Actions:
+    case VectorColumnKey.Actions:
       return (
         <div className="relative flex items-center justify-end gap-2">
           <Dropdown
@@ -73,18 +70,7 @@ export default function CollectionTableRow(
               </Button>
             </DropdownTrigger>
             <DropdownMenu aria-label="actions">
-              <DropdownItem
-                key={`/collection/${item.id}`}
-                value={`/collection/${item.id}`}
-                textValue="Inspect"
-                onClick={() =>
-                  setTimeout(() => {
-                    router.push(`/collection/${item.id}`);
-                  }, 500)
-                }
-              >
-                Inspect
-              </DropdownItem>
+              <DropdownItem>Inspect</DropdownItem>
               <DropdownItem color="danger" onClick={onDelete}>
                 Delete
               </DropdownItem>

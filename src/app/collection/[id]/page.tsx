@@ -28,6 +28,7 @@ import SimpleRowsPerPage from "@/components/paging/SimpleRowsPerPage";
 import { Spinner } from "@nextui-org/react";
 import TimeAgo from "react-timeago";
 import { VectorColumnKey } from "@/types/tables";
+import VectorTableRow from "@/components/vector/VectorTableRow";
 import { relativeApiFetcher } from "@/services/apiFetcher";
 import useClientTheme from "@/services/useClientTheme";
 import { useDisclosure } from "@nextui-org/modal";
@@ -44,10 +45,6 @@ const columns: Column[] = [
   {
     key: VectorColumnKey.Class,
     label: "Class",
-  },
-  {
-    key: VectorColumnKey.Description,
-    label: "Description",
   },
   {
     key: VectorColumnKey.Status,
@@ -136,7 +133,17 @@ export default function CollectionDetailsPage({
     totalPages: vectors?.totalPages,
   });
 
+  const renderCell = useCallback(
+    (item: GetVectorResponse, key: string) =>
+      VectorTableRow(router, item, key, () => {
+        setSelectedItem(item);
+        item?.id && deleteOnOpen();
+      }),
+    [deleteOnOpen, router],
+  );
+
   // TODO delete collection button
+  // TODO delete vector modal
   // TODO handle error and loading
   return (
     <PageContainer title="Collection Details">
@@ -183,7 +190,7 @@ export default function CollectionDetailsPage({
             </span>
           </div>
           <div className="flex flex-col gap-4">
-            {collectionData?.embeddingSize && (
+            {collectionData?.embeddingSize ? (
               <div className="flex flex-col gap-1">
                 <span className="text-lg font-semibold">Embedding</span>
                 <span className="text-default-700">
@@ -197,11 +204,15 @@ export default function CollectionDetailsPage({
                   </span>
                 </span>
               </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <span className="text-lg font-semibold">Embedding</span>
+                <span className="text-default-700">i&apos;m lonely :&#40;</span>
+              </div>
             )}
           </div>
         </div>
         <Divider />
-        {/* TODO vector table */}
         <div className="flex flex-col gap-4">
           <span className="font-light">Vectors in collection</span>
           <div className="flex justify-between gap-4">
@@ -224,6 +235,7 @@ export default function CollectionDetailsPage({
               onClick={createOnOpen}
             />
             <CreateVectorModal
+              embeddingSize={collectionData?.embeddingSize}
               collectionId={id}
               onCreate={onCreate}
               isOpen={isCreateOpen}
@@ -259,7 +271,15 @@ export default function CollectionDetailsPage({
             <TableBody
               isLoading={isLoadingVectors}
               loadingContent={<Spinner />}
-              emptyContent={isLoadingVectors ? <div></div> : "No vectors found"}
+              emptyContent={
+                isLoadingVectors ? (
+                  <div></div>
+                ) : (
+                  <div className="flex flex-col items-center gap-0">
+                    <span>No vectors found :&#40; </span>
+                  </div>
+                )
+              }
               items={vectors?.items ?? []}
             >
               {(item) => (
@@ -267,7 +287,7 @@ export default function CollectionDetailsPage({
                   {(columnKey) => (
                     <TableCell>
                       <></>
-                      {/* {renderCell(item, columnKey as string)} */}
+                      {renderCell(item, columnKey as string)}
                     </TableCell>
                   )}
                 </TableRow>

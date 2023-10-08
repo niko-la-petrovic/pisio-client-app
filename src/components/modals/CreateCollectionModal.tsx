@@ -42,7 +42,7 @@ export default function CreateCollectionModal({
       description: description ? description : undefined,
       embeddingSize: embeddingSize === 0 ? undefined : embeddingSize,
     };
-    
+
     apiJsonSender<CreateCollectionResponse>({
       body: body,
       method: "POST",
@@ -57,6 +57,7 @@ export default function CreateCollectionModal({
         close();
       })
       .catch((err: APIErrorResponse) => {
+        console.error(err);
         toast.error(
           <div className="">
             <p className="font-bold">Error creating collection</p>

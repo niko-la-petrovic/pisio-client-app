@@ -20,11 +20,13 @@ import useClientTheme from "@/services/useClientTheme";
 
 export default function CreateVectorModal({
   collectionId,
+  embeddingSize,
   isOpen,
   onOpenChange,
   close,
   onCreate,
 }: {
+  embeddingSize?: number;
   collectionId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,6 +63,7 @@ export default function CreateVectorModal({
         close();
       })
       .catch((err: APIErrorResponse) => {
+        console.error(err);
         toast.error(
           <div className="">
             <p className="font-bold">Error creating vector</p>
@@ -103,16 +106,20 @@ export default function CreateVectorModal({
         const embedding = e.target.value.split(",").map((v) => {
           const num = Number(v);
           if (isNaN(num)) throw new Error("Invalid embedding");
-          setEmbeddingError(null);
           return Number(v);
         });
+
+        if (embeddingSize && embedding.length !== embeddingSize)
+          throw new Error("Invalid embedding");
+
         setEmbedding(embedding);
+        setEmbeddingError(null);
       } catch (err) {
         console.error(err);
         setEmbeddingError("Invalid embedding");
       }
     },
-    [],
+    [embeddingSize],
   );
 
   const formInvalid = useMemo(() => {
@@ -120,9 +127,10 @@ export default function CreateVectorModal({
       vectorClass === null ||
       vectorClass.length === 0 ||
       embedding.length === 0 ||
-      embeddingError !== null
+      embeddingError !== null ||
+      (embeddingSize != undefined && embedding.length !== embeddingSize)
     );
-  }, [embedding.length, embeddingError, vectorClass]);
+  }, [embedding.length, embeddingError, embeddingSize, vectorClass]);
 
   return (
     <>
@@ -143,7 +151,9 @@ export default function CreateVectorModal({
                 />
                 <Textarea
                   errorMessage={embeddingError}
-                  label="Embedding (comma separated)"
+                  label={`Embedding (${
+                    embeddingSize != undefined ? embeddingSize + " numbers - " : ""
+                  }comma separated)`}
                   placeholder="Enter an embedding"
                   variant="bordered"
                   onChange={onEmbeddingChange}
