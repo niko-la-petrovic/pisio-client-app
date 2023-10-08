@@ -16,6 +16,7 @@ import {
 } from "@nextui-org/table";
 import {
   relativeApiFetcher,
+  relativeApiMethodExecute,
   relativeApiQueryFetcher,
 } from "@/services/apiFetcher";
 import { useCallback, useState } from "react";
@@ -23,6 +24,7 @@ import { useCallback, useState } from "react";
 import { APIErrorResponse } from "@/types/api/errorResponse";
 import AddButton from "@/components/buttons/AddButton";
 import CreateVectorModal from "@/components/modals/CreateVectorModal";
+import DeleteVectorModal from "@/components/modals/DeleteVectorModal";
 import { Divider } from "@nextui-org/divider";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
@@ -33,6 +35,7 @@ import { Spinner } from "@nextui-org/react";
 import TimeAgo from "react-timeago";
 import { VectorColumnKey } from "@/types/tables";
 import VectorTableRow from "@/components/vector/VectorTableRow";
+import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
 import { useDisclosure } from "@nextui-org/modal";
 import usePagination from "@/hooks/usePagination";
@@ -100,6 +103,7 @@ export default function CollectionDetailsPage({
   const {
     isOpen: isDeleteOpen,
     onOpen: deleteOnOpen,
+    onClose: deleteOnClose,
     onOpenChange: deleteOnOpenChange,
   } = useDisclosure();
 
@@ -124,8 +128,9 @@ export default function CollectionDetailsPage({
   }, [collectionMutate, vectorMutate]);
 
   const router = useRouter();
-  const [selectedItem, setSelectedItem] =
-    useState<GetCollectionResponse | null>(null);
+  const [selectedItem, setSelectedItem] = useState<GetVectorResponse | null>(
+    null,
+  );
 
   const pagination = usePagination({
     onChange: setPage,
@@ -145,8 +150,27 @@ export default function CollectionDetailsPage({
     [deleteOnOpen, router],
   );
 
+  const deleteVector = useCallback(
+    (id: string) => {
+      relativeApiMethodExecute(`api/vector/${id}`, "DELETE")
+        .then(() => {
+          toast.success("Vector deleted", {
+            theme,
+          });
+          vectorMutate();
+          setSelectedItem(null);
+          deleteOnClose();
+        })
+        .catch((err) => {
+          toast.error("Error deleting vector", {
+            theme,
+          });
+        });
+    },
+    [deleteOnClose, theme, vectorMutate],
+  );
+
   // TODO delete collection button
-  // TODO delete vector modal
   // TODO handle error and loading
   return (
     <PageContainer title="Collection Details">
@@ -297,6 +321,14 @@ export default function CollectionDetailsPage({
               )}
             </TableBody>
           </Table>
+          {/* TODO onDelete */}
+          <DeleteVectorModal
+            isOpen={isDeleteOpen}
+            onDelete={() => selectedItem?.id && deleteVector(selectedItem.id)}
+            onOpenChange={deleteOnOpenChange}
+            vectorClass={selectedItem?.class ?? ""}
+            vectorId={selectedItem?.id ?? ""}
+          />
         </div>
       </div>
     </PageContainer>

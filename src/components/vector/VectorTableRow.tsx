@@ -4,18 +4,15 @@ import {
   DropdownMenu,
   DropdownTrigger,
 } from "@nextui-org/dropdown";
-import {
-  GetCollectionResponse,
-  GetVectorResponse,
-} from "@/types/api/responses";
 
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { Button } from "@nextui-org/button";
-import { RxUpdate } from "react-icons/rx";
-import TimeAgo from "react-timeago";
+import { GetVectorResponse } from "@/types/api/responses";
 import TimeStatus from "../table/TimeStatus";
 import { VectorColumnKey } from "@/types/tables";
 import { VerticalDotsIcon } from "../icons/VerticalDotsIcon";
+
+const previewEmbeddingSize = 6;
 
 export default function VectorTableRow(
   router: AppRouterInstance,
@@ -41,10 +38,13 @@ export default function VectorTableRow(
       return (
         <div className="flex flex-col justify-start">
           {item.embedding?.length ? (
-            <span className="flex gap-2">
-              {item.embedding.map((e, index) => {
+            <span className="flex items-baseline gap-2">
+              {item.embedding.slice(0, previewEmbeddingSize).map((e, index) => {
                 return <span key={index}>{e}</span>;
               })}
+              {item.embedding.length > previewEmbeddingSize && (
+                <span className="text-neutral-200">...</span>
+              )}
             </span>
           ) : (
             <span className="text-xs text-neutral-200">

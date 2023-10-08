@@ -144,7 +144,6 @@ export default function CollectionsPage() {
   );
   const onDelete = useCallback(() => {
     if (!selectedItem?.id) return;
-    console.log("deleting", selectedItem.id);
     deleteCollection(selectedItem.id);
   }, [deleteCollection, selectedItem?.id]);
 

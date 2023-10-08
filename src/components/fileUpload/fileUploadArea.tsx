@@ -1,6 +1,6 @@
 "use client";
 
-import { FunctionComponent, useState } from "react";
+import { FunctionComponent, useCallback, useState } from "react";
 
 import { AiOutlineCloudUpload } from "react-icons/ai";
 import { Progress } from "@nextui-org/react";
@@ -19,6 +19,7 @@ const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
+  const [showProgress, setShowProgress] = useState(false);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -30,36 +31,49 @@ const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
     isDraggingOver && setIsDraggingOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    isDraggingOver && setIsDraggingOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      isDraggingOver && setIsDraggingOver(false);
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 1) {
-      toast.error("You can only upload one file at a time", {
-        theme,
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 1) {
+        toast.error("You can only upload one file at a time", {
+          theme,
+        });
+        return;
+      }
+
+      setFiles(files);
+
+      files.forEach((f) => {
+        const reader = new FileReader();
+
+        reader.onloadstart = () => {
+          setShowProgress(true);
+        };
+
+        reader.onprogress = (e) => {
+          setProgress((e.loaded / e.total) * 100);
+        };
+
+        reader.onloadend = () => {
+          setProgress(100);
+          setTimeout(() => {
+            setShowProgress(false);
+            setProgress(0);
+            uploadFinished(f);
+          }, 1000);
+        };
+
+        reader.readAsDataURL(f);
       });
-      return;
-    }
+    },
+    [isDraggingOver, theme, uploadFinished],
+  );
 
-    setFiles(files);
-
-    files.forEach((f) => {
-      const reader = new FileReader();
-
-      reader.onprogress = (e) => {
-        setProgress((e.loaded / e.total) * 100);
-      };
-
-      reader.readAsDataURL(f);
-    });
-  };
-
+  // TODO file upload on click
   const handleClick = () => {};
-
-  const handleAnimationEnd = () => {
-    uploadFinished(files[0]);
-  };
 
   return (
     <div className="flex w-56 flex-col gap-4" aria-label="File upload area">
@@ -68,7 +82,9 @@ const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={handleClick}
-        className={`rounded-lg ${isDraggingOver ? "shadow shadow-white" : ""}`}
+        className={`rounded-lg ${
+          isDraggingOver ? "shadow shadow-primary dark:shadow-white" : ""
+        }`}
       >
         <div
           className={`flex h-40 cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-zinc-100 p-8 text-sm transition-all duration-75 ease-in dark:bg-neutral-700 dark:text-white ${
@@ -83,14 +99,12 @@ const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
           </span>
         </div>
       </div>
-      {
-        <Progress
-          onAnimationEnd={handleAnimationEnd}
-          className={`${progress === 0 ? "invisible" : "visible"}`}
-          value={progress}
-          aria-label="File upload progress"
-        />
-      }
+      <Progress
+        className={`${showProgress ? "visible" : "invisible"}`}
+        value={progress}
+        color={progress === 100 ? "success" : "primary"}
+        aria-label="File upload progress"
+      />
     </div>
   );
 };
