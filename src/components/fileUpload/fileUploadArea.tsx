@@ -4,8 +4,9 @@ import { FunctionComponent, useState } from "react";
 
 import { AiOutlineCloudUpload } from "react-icons/ai";
 import { Progress } from "@nextui-org/react";
-import { motion } from "framer-motion";
 import styles from "./fileUploadArea.module.css";
+import { toast } from "react-toastify";
+import useClientTheme from "@/services/useClientTheme";
 
 interface FileUploadAreaProps {
   uploadFinished: (file: File) => void;
@@ -14,6 +15,7 @@ interface FileUploadAreaProps {
 const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
   uploadFinished,
 }) => {
+  const theme = useClientTheme();
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState(0);
@@ -34,8 +36,9 @@ const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
 
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 1) {
-      // TODO show error
-      alert("You can only upload one file at a time");
+      toast.error("You can only upload one file at a time", {
+        theme,
+      });
       return;
     }
 
@@ -68,13 +71,14 @@ const FileUploadArea: FunctionComponent<FileUploadAreaProps> = ({
         className={`rounded-lg ${isDraggingOver ? "shadow shadow-white" : ""}`}
       >
         <div
-          className={`flex h-40 cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-neutral-700 p-8 text-sm text-white  transition-all duration-75 ease-in ${
+          className={`flex h-40 cursor-pointer flex-col items-center justify-center gap-4 rounded-lg bg-zinc-100 p-8 text-sm transition-all duration-75 ease-in dark:bg-neutral-700 dark:text-white ${
             styles.inset
           } ${isDraggingOver ? "bg-neutral-600" : ""}`}
         >
           <AiOutlineCloudUpload className="text-4xl" />
           <span className="text-center">
-            Drag and drop or <span className="text-sky-300">browse</span> to
+            Drag and drop or{" "}
+            <span className="text-sky-600 dark:text-sky-300">browse</span> to
             upload a file
           </span>
         </div>

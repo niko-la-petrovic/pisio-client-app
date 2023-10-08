@@ -14,6 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/table";
+import {
+  relativeApiFetcher,
+  relativeApiQueryFetcher,
+} from "@/services/apiFetcher";
 import { useCallback, useState } from "react";
 
 import { APIErrorResponse } from "@/types/api/errorResponse";
@@ -29,7 +33,6 @@ import { Spinner } from "@nextui-org/react";
 import TimeAgo from "react-timeago";
 import { VectorColumnKey } from "@/types/tables";
 import VectorTableRow from "@/components/vector/VectorTableRow";
-import { relativeApiFetcher } from "@/services/apiFetcher";
 import useClientTheme from "@/services/useClientTheme";
 import { useDisclosure } from "@nextui-org/modal";
 import usePagination from "@/hooks/usePagination";
@@ -106,8 +109,8 @@ export default function CollectionDetailsPage({
     error: vectorError,
     mutate: vectorMutate,
   } = useSWR<GetVectorResponsePaginated, APIErrorResponse>(
-    `api/vector/collection/${id}`,
-    relativeApiFetcher,
+    [`api/vector/collection/${id}`, `page=${page}&pageSize=${rowsPerPage}`],
+    ([route, query]) => relativeApiQueryFetcher(route, query as string),
   );
 
   const onSearchChange = useCallback((value?: string) => {
