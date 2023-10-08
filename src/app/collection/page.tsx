@@ -1,6 +1,5 @@
 "use client";
 
-import { ChangeEvent, useCallback, useMemo, useState } from "react";
 import {
   GetCollectionResponse,
   GetCollectionResponsePaginated,
@@ -18,9 +17,10 @@ import {
   relativeApiMethodExecute,
   relativeApiQueryFetcher,
 } from "@/services/apiFetcher";
+import { useCallback, useMemo, useState } from "react";
 
 import { APIErrorResponse } from "@/types/api/errorResponse";
-import { Button } from "@nextui-org/button";
+import AddButton from "@/components/buttons/AddButton";
 import { CollectionColumnKey } from "@/types/tables";
 import CollectionTableRow from "@/components/collection/CollectionTableRow";
 import CreateCollectionModal from "@/components/modals/CreateCollectionModal";
@@ -28,13 +28,13 @@ import DeleteCollectionModal from "@/components/modals/DeleteCollectionModal";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
 import { Pagination } from "@nextui-org/pagination";
-import { PlusIcon } from "@/components/icons/PlusIcon";
 import { SearchIcon } from "@/components/icons/SearchIcon";
 import SimpleRowsPerPage from "@/components/paging/SimpleRowsPerPage";
 import { Spinner } from "@nextui-org/spinner";
 import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
 import { useDisclosure } from "@nextui-org/modal";
+import usePagination from "@/hooks/usePagination";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 
@@ -104,39 +104,14 @@ export default function CollectionsPage() {
   } = useDisclosure();
   const router = useRouter();
 
-  const bottomContent = useMemo(() => {
-    return (
-      <>
-        {data?.totalPages && (
-          <div className="flex items-center justify-between px-2 py-2">
-            <Pagination
-              showControls
-              classNames={{
-                cursor: "bg-foreground text-background",
-              }}
-              color="default"
-              isDisabled={hasSearchFilter}
-              page={page}
-              total={data.totalPages}
-              variant="light"
-              onChange={setPage}
-            />
-            <span className="text-small text-default-400">
-              {selectedKeys === "all"
-                ? "All items selected"
-                : `${selectedKeys.size} of ${data?.items?.length} selected`}
-            </span>
-          </div>
-        )}
-      </>
-    );
-  }, [
-    hasSearchFilter,
+  const bottomContent = usePagination({
     page,
-    data?.totalPages,
-    data?.items?.length,
+    totalPages: data?.totalPages,
+    isDisabled: isLoading,
+    onChange: setPage,
     selectedKeys,
-  ]);
+    selectable: data?.items?.length,
+  });
 
   const [selectedItem, setSelectedItem] =
     useState<GetCollectionResponse | null>(null);
@@ -191,14 +166,7 @@ export default function CollectionsPage() {
             onClear={() => setFilterValue("")}
             onValueChange={onSearchChange}
           />
-          <Button
-            className="bg-foreground text-background"
-            endContent={<PlusIcon />}
-            size="sm"
-            onClick={openCreate}
-          >
-            Add
-          </Button>
+          <AddButton onClick={openCreate} />
           <CreateCollectionModal
             onCreate={onCreate}
             isOpen={isCreateOpen}

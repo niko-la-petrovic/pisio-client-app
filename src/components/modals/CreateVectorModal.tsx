@@ -1,6 +1,6 @@
 import {
-  CreateCollectionRequest,
-  CreateCollectionResponse,
+  CreateVectorRequest,
+  CreateVectorResponse,
 } from "@/types/api/responses";
 import { Input, Textarea } from "@nextui-org/input";
 import {
@@ -18,12 +18,14 @@ import { apiJsonSender } from "@/services/apiFetcher";
 import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
 
-export default function CreateCollectionModal({
+export default function CreateVectorModal({
+  collectionId,
   isOpen,
   onOpenChange,
   close,
   onCreate,
 }: {
+  collectionId: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   close: () => void;
@@ -31,26 +33,28 @@ export default function CreateCollectionModal({
 }) {
   const theme = useClientTheme();
 
-  const [name, setName] = useState<string | null>(null);
-  const [description, setDescription] = useState<string | null>("");
-  const [embeddingSize, setEmbeddingSize] = useState<number>(0);
-  const [nameTouched, setNameTouched] = useState<boolean>(false);
+  const [vectorClass, setVectorClass] = useState<string | null>(null);
+  const [description, setDescription] = useState<string | null>(null);
+  const [embedding, setEmbedding] = useState<number[]>([]);
+  const [embeddingError, setEmbeddingError] = useState<string | null>(null);
+  const [vectorClassTouched, setVectorClassTouched] = useState<boolean>(false);
 
   const onSubmit = useCallback(() => {
-    const body: CreateCollectionRequest = {
-      name: name ? name : undefined,
+    const body: CreateVectorRequest = {
+      class: vectorClass ? vectorClass : undefined,
+      collectionId,
       description: description ? description : undefined,
-      embeddingSize: embeddingSize === 0 ? undefined : embeddingSize,
+      embedding,
     };
-    
-    apiJsonSender<CreateCollectionResponse>({
+
+    apiJsonSender<CreateVectorResponse>({
       body: body,
       method: "POST",
-      route: "api/collection",
+      route: "api/vector",
     })
       .then((res) => {
         console.log(theme);
-        toast.success("Collection created", {
+        toast.success("Vector created", {
           theme,
         });
         onCreate();
@@ -59,7 +63,7 @@ export default function CreateCollectionModal({
       .catch((err: APIErrorResponse) => {
         toast.error(
           <div className="">
-            <p className="font-bold">Error creating collection</p>
+            <p className="font-bold">Error creating vector</p>
             {err.title && <p>{err.title}</p>}
             {err.status && <p>Status {err.status}</p>}
           </div>,
@@ -68,12 +72,23 @@ export default function CreateCollectionModal({
           },
         );
       });
-  }, [close, description, embeddingSize, name, onCreate, theme]);
+  }, [
+    close,
+    collectionId,
+    description,
+    embedding,
+    onCreate,
+    theme,
+    vectorClass,
+  ]);
 
-  const onNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    setNameTouched(true);
-  }, []);
+  const onVectorClassChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setVectorClass(e.target.value);
+      setVectorClassTouched(true);
+    },
+    [],
+  );
 
   const onDescriptionChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,23 +97,32 @@ export default function CreateCollectionModal({
     [],
   );
 
-  const onEmbeddingSizeChange = useCallback(
+  const onEmbeddingChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log(e.target.value);
-      setEmbeddingSize(Number(e.target.value));
+      try {
+        const embedding = e.target.value.split(",").map((v) => {
+          const num = Number(v);
+          if (isNaN(num)) throw new Error("Invalid embedding");
+          setEmbeddingError(null);
+          return Number(v);
+        });
+        setEmbedding(embedding);
+      } catch (err) {
+        console.error(err);
+        setEmbeddingError("Invalid embedding");
+      }
     },
     [],
   );
 
   const formInvalid = useMemo(() => {
-    return name === null || name.length === 0;
-  }, [name]);
-  const nameError = useMemo(() => {
-    if (nameTouched && (name === null || name.length === 0)) {
-      return "Name is required";
-    }
-    return null;
-  }, [name, nameTouched]);
+    return (
+      vectorClass === null ||
+      vectorClass.length === 0 ||
+      embedding.length === 0 ||
+      embeddingError !== null
+    );
+  }, [embedding.length, embeddingError, vectorClass]);
 
   return (
     <>
@@ -107,16 +131,22 @@ export default function CreateCollectionModal({
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                <p>Create a new collection</p>
+                <p>Add a new vector</p>
               </ModalHeader>
               <ModalBody>
                 <Input
-                  errorMessage={nameError}
-                  onChange={onNameChange}
                   autoFocus
-                  label="Name"
-                  placeholder="Enter a name"
+                  label="Class"
+                  placeholder="Enter a class"
                   variant="bordered"
+                  onChange={onVectorClassChange}
+                />
+                <Textarea
+                  errorMessage={embeddingError}
+                  label="Embedding (comma separated)"
+                  placeholder="Enter an embedding"
+                  variant="bordered"
+                  onChange={onEmbeddingChange}
                 />
                 <span>Optional</span>
                 <Textarea
@@ -125,15 +155,6 @@ export default function CreateCollectionModal({
                   variant="bordered"
                   value={description ? description : ""}
                   onChange={onDescriptionChange}
-                />
-                <Input
-                  label="Embedding Size"
-                  placeholder="Enter an embedding size"
-                  type="number"
-                  variant="bordered"
-                  min={0}
-                  value={embeddingSize === 0 ? "" : embeddingSize.toString()}
-                  onChange={onEmbeddingSizeChange}
                 />
               </ModalBody>
               <ModalFooter>
