@@ -33,15 +33,17 @@ export default function CreateCollectionModal({
 
   const [name, setName] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>("");
-  const [embeddingSize, setEmbeddingSize] = useState<number | null>(null);
+  const [embeddingSize, setEmbeddingSize] = useState<number>(0);
   const [nameTouched, setNameTouched] = useState<boolean>(false);
 
   const onSubmit = useCallback(() => {
+    console.log(embeddingSize);
     const body: CreateCollectionRequest = {
       name: name ? name : undefined,
       description: description ? description : undefined,
-      embeddingSize: embeddingSize ? embeddingSize : undefined,
+      embeddingSize: embeddingSize === 0 ? undefined : embeddingSize,
     };
+    console.log(body);
 
     apiJsonSender<CreateCollectionResponse>({
       body: body,
@@ -84,6 +86,7 @@ export default function CreateCollectionModal({
 
   const onEmbeddingSizeChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      console.log(e.target.value);
       setEmbeddingSize(Number(e.target.value));
     },
     [],
@@ -130,8 +133,9 @@ export default function CreateCollectionModal({
                   placeholder="Enter an embedding size"
                   type="number"
                   variant="bordered"
-                  value={embeddingSize ? embeddingSize.toString() : ""}
-                  onChangeCapture={onEmbeddingSizeChange}
+                  min={0}
+                  value={embeddingSize === 0 ? "" : embeddingSize.toString()}
+                  onChange={onEmbeddingSizeChange}
                 />
               </ModalBody>
               <ModalFooter>

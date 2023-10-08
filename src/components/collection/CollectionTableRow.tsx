@@ -17,6 +17,7 @@ export default function CollectionTableRow(
   router: AppRouterInstance,
   item: GetCollectionResponse,
   columnKey: string,
+  onDelete: () => void,
 ) {
   switch (columnKey) {
     case CollectionColumnKey.Name:
@@ -80,23 +81,22 @@ export default function CollectionTableRow(
                 <VerticalDotsIcon className="text-default-400" />
               </Button>
             </DropdownTrigger>
-            <DropdownMenu
-              aria-label="actions"
-              onAction={(key) => {
-                setTimeout(() => {
-                  router.push(key as string);
-                }, 500);
-              }}
-            >
+            <DropdownMenu aria-label="actions">
               <DropdownItem
                 key={`/collection/${item.id}`}
                 value={`/collection/${item.id}`}
                 textValue="Inspect"
+                onClick={() =>
+                  setTimeout(() => {
+                    router.push(`/collection/${item.id}`);
+                  }, 500)
+                }
               >
                 Inspect
               </DropdownItem>
-              {/* TODO delete modal */}
-              <DropdownItem color="danger">Delete</DropdownItem>
+              <DropdownItem color="danger" onClick={onDelete}>
+                Delete
+              </DropdownItem>
             </DropdownMenu>
           </Dropdown>
         </div>

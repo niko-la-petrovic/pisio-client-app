@@ -13,11 +13,13 @@ export default function DeleteCollectionModal({
   vectorCount,
   isOpen,
   onOpenChange,
+  onDelete,
 }: {
   name: string;
-  vectorCount?: number;
+  vectorCount?: string | number;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onDelete: () => void;
 }) {
   return (
     <>
@@ -34,11 +36,11 @@ export default function DeleteCollectionModal({
               <ModalBody>
                 <div className="flex flex-col gap-2">
                   <p className="flex items-baseline gap-1">
-                    All
+                    <span>All</span>
                     {vectorCount && (
-                      <span className="text-lg text-danger">{vectorCount}</span>
+                      <span className="text-danger">{vectorCount}</span>
                     )}
-                    vectors in this collection will be{" "}
+                    <span>vectors in this collection will be</span>{" "}
                     <span className="text-danger">deleted</span>.
                   </p>
                   <p className="font-semibold">
@@ -48,7 +50,7 @@ export default function DeleteCollectionModal({
                 </div>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
+                <Button color="danger" variant="light" onPress={onDelete}>
                   I&apos;m sure 😢
                 </Button>
                 <Button color="primary" onPress={onClose}>

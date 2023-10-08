@@ -4,6 +4,16 @@ function isErrorStatusCode(statusCode: number) {
   return statusCode >= 400;
 }
 
+export async function relativeApiMethodExecute(
+  route: string,
+  method: string,
+): Promise<void> {
+  const res = await fetch(`${envVars.API_URL.value}/${route}`, {
+    method,
+  });
+  if (isErrorStatusCode(res.status)) throw await res.json();
+}
+
 export async function apiJsonSender<T>({
   route,
   method,

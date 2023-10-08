@@ -14,12 +14,17 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/table";
+import {
+  relativeApiMethodExecute,
+  relativeApiQueryFetcher,
+} from "@/services/apiFetcher";
 
 import { APIErrorResponse } from "@/types/api/errorResponse";
 import { Button } from "@nextui-org/button";
 import { CollectionColumnKey } from "@/types/tables";
 import CollectionTableRow from "@/components/collection/CollectionTableRow";
 import CreateCollectionModal from "@/components/modals/CreateCollectionModal";
+import DeleteCollectionModal from "@/components/modals/DeleteCollectionModal";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
 import { Pagination } from "@nextui-org/pagination";
@@ -27,8 +32,8 @@ import { PlusIcon } from "@/components/icons/PlusIcon";
 import { SearchIcon } from "@/components/icons/SearchIcon";
 import SimpleRowsPerPage from "@/components/paging/SimpleRowsPerPage";
 import { Spinner } from "@nextui-org/spinner";
-import { debounce } from "lodash";
-import { relativeApiQueryFetcher } from "@/services/apiFetcher";
+import { toast } from "react-toastify";
+import useClientTheme from "@/services/useClientTheme";
 import { useDisclosure } from "@nextui-org/modal";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -60,6 +65,7 @@ const columns: Column[] = [
 // TODO add debounce to search
 
 export default function CollectionsPage() {
+  const theme = useClientTheme();
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
   const [page, setPage] = useState<number>(1);
   const [filterValue, setFilterValue] = useState<string>("");
@@ -82,13 +88,6 @@ export default function CollectionsPage() {
     else setFilterValue("");
   }, []);
 
-  const onRowsPerPageChange = useCallback(
-    (event: ChangeEvent<HTMLSelectElement>) => {
-      setRowsPerPage(Number(event.target.value));
-    },
-    [],
-  );
-
   const {
     onOpen: openDelete,
     onClose: closeDelete,
@@ -103,12 +102,6 @@ export default function CollectionsPage() {
     onOpenChange: onCreateOpenChange,
   } = useDisclosure();
   const router = useRouter();
-
-  const renderCell = useCallback(
-    (item: GetCollectionResponse, key: string) =>
-      CollectionTableRow(router, item, key),
-    [router],
-  );
 
   const bottomContent = useMemo(() => {
     return (
@@ -144,20 +137,40 @@ export default function CollectionsPage() {
     selectedKeys,
   ]);
 
+  const [selectedItem, setSelectedItem] =
+    useState<GetCollectionResponse | null>(null);
+
   const deleteCollection = useCallback(
     async (id: string) => {
-      await fetch(`/api/Collection/${id}`, {
-        method: "DELETE",
+      await relativeApiMethodExecute(`api/collection/${id}`, "DELETE");
+      toast.success("Collection deleted", {
+        theme,
       });
       mutate();
+      setSelectedItem(null);
+      closeDelete();
     },
-    [mutate],
+    [closeDelete, mutate, theme],
   );
 
   const onCreate = useCallback(() => {
     setPage(1);
     mutate();
   }, [mutate]);
+
+  const renderCell = useCallback(
+    (item: GetCollectionResponse, key: string) =>
+      CollectionTableRow(router, item, key, () => {
+        setSelectedItem(item);
+        item?.id && openDelete();
+      }),
+    [openDelete, router],
+  );
+  const onDelete = useCallback(() => {
+    if (!selectedItem?.id) return;
+    console.log("deleting", selectedItem.id);
+    deleteCollection(selectedItem.id);
+  }, [deleteCollection, selectedItem?.id]);
 
   return (
     <PageContainer title="Collections">
@@ -242,6 +255,13 @@ export default function CollectionsPage() {
           </div>
         )}
       </div>
+      <DeleteCollectionModal
+        isOpen={isDeleteOpen}
+        onOpenChange={onDeleteOpenChange}
+        name={selectedItem?.name ?? ""}
+        vectorCount={selectedItem?.vectorCount}
+        onDelete={onDelete}
+      />
     </PageContainer>
   );
 }
