@@ -63,6 +63,7 @@ const columns: Column[] = [
 ];
 
 // TODO add debounce to search
+// TODO add loading skeletons
 
 export default function CollectionsPage() {
   const theme = useClientTheme();
