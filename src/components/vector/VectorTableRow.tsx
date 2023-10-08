@@ -19,6 +19,7 @@ export default function VectorTableRow(
   item: GetVectorResponse,
   columnKey: string,
   onDelete: () => void,
+  onInspect: () => void,
 ) {
   switch (columnKey) {
     case VectorColumnKey.Class:
@@ -70,7 +71,7 @@ export default function VectorTableRow(
               </Button>
             </DropdownTrigger>
             <DropdownMenu aria-label="actions">
-              <DropdownItem>Inspect</DropdownItem>
+              <DropdownItem onClick={onInspect}>Inspect</DropdownItem>
               <DropdownItem color="danger" onClick={onDelete}>
                 Delete
               </DropdownItem>

@@ -26,6 +26,7 @@ import AddButton from "@/components/buttons/AddButton";
 import CreateVectorModal from "@/components/modals/CreateVectorModal";
 import DeleteVectorModal from "@/components/modals/DeleteVectorModal";
 import { Divider } from "@nextui-org/divider";
+import EmbeddingPreviewModal from "@/components/modals/EmbeddingPreviewModal";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
 import { RxUpdate } from "react-icons/rx";
@@ -108,6 +109,13 @@ export default function CollectionDetailsPage({
   } = useDisclosure();
 
   const {
+    isOpen: isInspectOpen,
+    onOpen: inspectOnOpen,
+    onClose: inspectOnClose,
+    onOpenChange: inspectOnOpenChange,
+  } = useDisclosure();
+
+  const {
     data: vectors,
     isLoading: isLoadingVectors,
     error: vectorError,
@@ -143,11 +151,20 @@ export default function CollectionDetailsPage({
 
   const renderCell = useCallback(
     (item: GetVectorResponse, key: string) =>
-      VectorTableRow(router, item, key, () => {
-        setSelectedItem(item);
-        item?.id && deleteOnOpen();
-      }),
-    [deleteOnOpen, router],
+      VectorTableRow(
+        router,
+        item,
+        key,
+        () => {
+          setSelectedItem(item);
+          item?.id && deleteOnOpen();
+        },
+        () => {
+          setSelectedItem(item);
+          item?.embedding && inspectOnOpen();
+        },
+      ),
+    [deleteOnOpen, inspectOnOpen, router],
   );
 
   const deleteVector = useCallback(
@@ -321,13 +338,18 @@ export default function CollectionDetailsPage({
               )}
             </TableBody>
           </Table>
-          {/* TODO onDelete */}
           <DeleteVectorModal
             isOpen={isDeleteOpen}
             onDelete={() => selectedItem?.id && deleteVector(selectedItem.id)}
             onOpenChange={deleteOnOpenChange}
             vectorClass={selectedItem?.class ?? ""}
             vectorId={selectedItem?.id ?? ""}
+          />
+          <EmbeddingPreviewModal
+            close={inspectOnClose}
+            isOpen={isInspectOpen}
+            embedding={selectedItem?.embedding ?? []}
+            onOpenChange={inspectOnOpenChange}
           />
         </div>
       </div>
