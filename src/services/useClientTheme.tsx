@@ -1,7 +1,12 @@
 "use client";
 
-export default function useClientTheme() {
-  let localStorageTheme = localStorage.getItem("theme");
+import { useEffect, useState } from "react";
 
-  return localStorageTheme === "light" ? "light" : "dark";
+export default function useClientTheme() {
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  useEffect(() => {
+    let localStorageTheme = localStorage?.getItem("theme");
+    setTheme(localStorageTheme === "light" ? "light" : "dark");
+  }, []);
+  return theme;
 }
