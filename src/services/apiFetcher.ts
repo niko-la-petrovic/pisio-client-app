@@ -14,7 +14,23 @@ export async function relativeApiMethodExecute(
   if (isErrorStatusCode(res.status)) throw await res.json();
 }
 
-export async function apiJsonSender<T>({
+export async function relativeApiMultipartSender<T>({
+  route,
+  method,
+  body,
+}: {
+  route: string;
+  method: string;
+  body: FormData;
+}): Promise<void> {
+  const res = await fetch(`${envVars.API_URL.value}/${route}`, {
+    method,
+    body,
+  });
+  if (isErrorStatusCode(res.status)) throw await res.json();
+}
+
+export async function relativeApiJsonSender<T>({
   route,
   method,
   body,

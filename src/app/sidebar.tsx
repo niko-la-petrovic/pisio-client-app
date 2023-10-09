@@ -23,7 +23,7 @@ export default function Sidebar() {
               className={
                 `w-full` +
                 (pathname === item.href
-                  ? " font-semibold text-sky-700 dark:text-sky-500"
+                  ? " font-semibold text-primary-700 dark:text-primary-500"
                   : "")
               }
             >

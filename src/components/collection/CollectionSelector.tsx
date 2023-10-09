@@ -12,8 +12,21 @@ function renderSuggestion(
   selected?: boolean,
 ) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-baseline justify-between">
       <span>{collection.name}</span>
+      {/* TODO extract into reusable component */}
+      {collection.embeddingSize ? (
+        <span className="text-default-700">
+          n=
+          <span className="font-semibold">{collection.vectorCount}</span>
+          {" * "}
+          <span className="font-semibold text-secondary">
+            {collection.embeddingSize}
+          </span>
+        </span>
+      ) : (
+        <span className="text-default-700">i&apos;m lonley :&#40;</span>
+      )}
     </div>
   );
 }
@@ -95,7 +108,6 @@ export default function CollectionSelector({
             onCollectionSelected && onCollectionSelected(suggestion);
           }}
         >
-          
           {(collection) => {
             if (collection.id === undefined) return <></>;
             const isSelected = selectedCollection?.id === collection.id;

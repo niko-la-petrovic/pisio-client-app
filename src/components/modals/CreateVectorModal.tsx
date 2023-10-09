@@ -14,7 +14,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import { APIErrorResponse } from "@/types/api/errorResponse";
 import { Button } from "@nextui-org/button";
-import { apiJsonSender } from "@/services/apiFetcher";
+import { relativeApiJsonSender } from "@/services/apiFetcher";
 import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
 
@@ -49,7 +49,7 @@ export default function CreateVectorModal({
       embedding,
     };
 
-    apiJsonSender<CreateVectorResponse>({
+    relativeApiJsonSender<CreateVectorResponse>({
       body: body,
       method: "POST",
       route: "api/vector",
@@ -152,7 +152,9 @@ export default function CreateVectorModal({
                 <Textarea
                   errorMessage={embeddingError}
                   label={`Embedding (${
-                    embeddingSize != undefined ? embeddingSize + " numbers - " : ""
+                    embeddingSize != undefined
+                      ? embeddingSize + " numbers - "
+                      : ""
                   }comma separated)`}
                   placeholder="Enter an embedding"
                   variant="bordered"
