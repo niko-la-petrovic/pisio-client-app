@@ -1,10 +1,6 @@
 "use client";
 
 import {
-  GetCollectionResponse,
-  GetCollectionResponsePaginated,
-} from "@/types/api/responses";
-import {
   Selection,
   Table,
   TableBody,
@@ -13,30 +9,30 @@ import {
   TableHeader,
   TableRow,
 } from "@nextui-org/table";
-import {
-  relativeApiMethodExecute,
-  relativeApiQueryFetcher,
-} from "@/services/apiFetcher";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 
-import { APIErrorResponse } from "@/types/api/errorResponse";
 import AddButton from "@/components/buttons/AddButton";
 import { CollectionColumnKey } from "@/types/tables";
 import CollectionTableRow from "@/components/collection/CollectionTableRow";
 import CreateCollectionModal from "@/components/modals/CreateCollectionModal";
 import DeleteCollectionModal from "@/components/modals/DeleteCollectionModal";
+import {
+  GetCollectionResponse,
+} from "@/types/api/responses";
 import { Input } from "@nextui-org/input";
 import PageContainer from "@/components/page/pageContainer";
-import { Pagination } from "@nextui-org/pagination";
 import { SearchIcon } from "@/components/icons/SearchIcon";
 import SimpleRowsPerPage from "@/components/paging/SimpleRowsPerPage";
 import { Spinner } from "@nextui-org/spinner";
+import {
+  relativeApiMethodExecute,
+} from "@/services/apiFetcher";
 import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
+import useCollectiions from "@/hooks/api/useCollections";
 import { useDisclosure } from "@nextui-org/modal";
 import usePagination from "@/hooks/usePagination";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
 
 type Column = {
   key: CollectionColumnKey;
@@ -72,17 +68,12 @@ export default function CollectionsPage() {
   const [filterValue, setFilterValue] = useState<string>("");
   const hasSearchFilter = Boolean(filterValue);
   const [selectedKeys, setSelectedKeys] = useState<Selection>(new Set([]));
-  const { data, error, isLoading, mutate } = useSWR<
-    GetCollectionResponsePaginated,
-    APIErrorResponse
-  >(
-    [
-      "api/Collection",
-      (hasSearchFilter ? `nameQuery=${filterValue}&` : "") +
-        `page=${page}&pageSize=${rowsPerPage}`,
-    ],
-    ([route, query]) => relativeApiQueryFetcher(route, query as string),
-  );
+  const { data, error, isLoading, mutate } = useCollectiions({
+    hasSearchFilter,
+    filterValue,
+    page,
+    rowsPerPage,
+  });
 
   const onSearchChange = useCallback((value?: string) => {
     if (value) setFilterValue(value);
