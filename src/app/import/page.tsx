@@ -9,6 +9,7 @@ import CollectionSelector from "@/components/collection/CollectionSelector";
 import FileUploadArea from "@/components/fileUpload/fileUploadArea";
 import { GetCollectionResponse } from "@/types/api/responses";
 import PageContainer from "@/components/page/pageContainer";
+import RenderStep from "@/components/RenderStep";
 import { relativeApiMultipartSender } from "@/services/apiFetcher";
 import { toast } from "react-toastify";
 import useClientTheme from "@/services/useClientTheme";
@@ -317,16 +318,5 @@ export default function ImportPage() {
         </div>
       </div>
     </PageContainer>
-  );
-}
-
-function RenderStep({ step, title }: { step: number; title: string }) {
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-700 font-bold text-white">
-        {step}
-      </div>
-      <span className="text-lg font-semibold">{title}</span>
-    </div>
   );
 }

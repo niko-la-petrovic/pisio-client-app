@@ -91,9 +91,18 @@ export interface UpdateVectorRequest {
 
 export interface VectorSimilarityRequest {
     collectionId?: string;
-    embeddings?: number[] | undefined;
+    embedding?: number[] | undefined;
+    algorithm?: string | undefined;
+    k?: number;
+    distance?: string | undefined;
 }
 
 export interface VectorSimilarityResponse {
     classes?: string[] | undefined;
+    distances?: number[] | undefined;
+}
+
+export interface FileParameter {
+    data: any;
+    fileName: string;
 }
