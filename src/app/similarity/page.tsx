@@ -66,6 +66,7 @@ export default function SimilarityPage() {
       embedding,
       algorithm: "flat",
       distance: "l2",
+      k: k,
     };
 
     relativeApiJsonSender<VectorSimilarityResponse>({
@@ -84,10 +85,9 @@ export default function SimilarityPage() {
           theme,
         });
       });
-  }, [collection?.id, embedding, theme]);
+  }, [collection?.id, embedding, k, theme]);
 
   const disableSubmit = useMemo(() => {
-    // TODO consider k selection
     return (!collection || embedding.length == 0) ?? true;
   }, [collection, embedding.length]);
 
@@ -139,6 +139,7 @@ export default function SimilarityPage() {
               items={kValues}
               selectionMode="single"
               selectedKeys={selection}
+              defaultSelectedKeys={[1]}
               onSelectionChange={onSelectionChange}
               renderValue={(values) =>
                 values.map((value, index) => (
